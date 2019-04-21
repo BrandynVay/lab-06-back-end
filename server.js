@@ -34,6 +34,14 @@ app.get('/weather', (request, response) => {
   // call a getWeather function
   // process the data from the darksky json - You need a constructor
   // return the results to the client
+  try {
+    const weatherData = getWeather(request.query.data);
+    response.send(weatherData);
+  }
+  catch (error) {
+    console.error(error);
+    response.status(500).send('Status: 500. So sorry, something went wrong.');
+  }
 
   response.send('Return the results here')
 });
@@ -62,7 +70,20 @@ function Location(data) {
 }
 
 // Start building your Weather function and constructor here.
+function getWeather(query) {
+  const darksky = require('./public/data/darksky.json');
+  const rain = new Weather(darksky);
+  console.log(rain);
+  return rain;
+}
 
+function Weather(data) {
+  this.formatted_query = data.results[0].formatted_timezone;
+  this.latitude = data.results[0].geometry.location.lat;
+  this.longitude = data.results[0].geometry.location.lng;
+  this.latitude = data.results[0].currently.summary;
+  this.longitude = data.results[0].currently.time;
+}
 
 
 
