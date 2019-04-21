@@ -77,6 +77,12 @@ function getWeather(query) {
   return rain;
 }
 
+const weatherSummaries = [];
+
+darksky.daily.data.forEach( day => {
+  //push something in to the array
+})
+
 function Weather(data) {
   this.time = data.results[0].daily.data.time;
   this.summary = data.results[0].daily.data.summary;
