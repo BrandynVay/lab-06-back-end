@@ -78,11 +78,8 @@ function getWeather(query) {
 }
 
 function Weather(data) {
-  this.formatted_query = data.results[0].formatted_timezone;
-  this.latitude = data.results[0].geometry.location.lat;
-  this.longitude = data.results[0].geometry.location.lng;
-  this.latitude = data.results[0].currently.summary;
-  this.longitude = data.results[0].currently.time;
+  this.time = data.results[0].daily.data.time;
+  this.summary = data.results[0].daily.data.summary;
 }
 
 
