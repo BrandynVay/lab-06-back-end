@@ -13,8 +13,6 @@ app.use(cors()); //tell express to use cors
 
 const PORT = process.env.PORT;
 
-const weatherSummaries = [];
-
 app.get('/testing', (request, response) => {
   console.log('found the testing route')
   response.send('<h1>HELLO WORLD...</h1>')
@@ -32,7 +30,6 @@ app.get('/location', (request, response) => {
 });
 
 app.get('/weather', (request, response) => {
-  console.log('From weather Request', request.query.data.latitude);
   // call a getWeather function
   // process the data from the darksky json - You need a constructor
   // return the results to the client
@@ -44,7 +41,6 @@ app.get('/weather', (request, response) => {
     console.error(error);
     response.status(500).send('Status: 500. So sorry, something went wrong.');
   }
-
   response.send('Return the results here')
 });
 
@@ -74,23 +70,17 @@ function Location(data) {
 // Start building your Weather function and constructor here.
 function getWeather(query) {
   const darksky = require('./data/darksky.json');
-  const rain = new Weather(darksky);
-  console.log(rain);
-  return rain;
+  const weatherSummaries = [];
+  darksky.daily.data.forEach( day => {
+    //push something in to the array
+    const daily = new Weather(day)
+    weatherSummaries.push(daily)
+  })
+  return weatherSummaries;
 }
-
-
-// darksky.daily.data.forEach( day => {
-//   //push something in to the array
-//   weatherSummaries.push(day);
-// })
-
-console.log(weatherSummaries);
 
 function Weather(data) {
-  this.time = data.results[0].daily.data.time;
-  this.summary = data.results[0].daily.data.summary;
+  this.forecast = data.summary;
+  this.time = data.time;
 }
-
-
 
