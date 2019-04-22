@@ -30,11 +30,17 @@ app.get('/location', (request, response) => {
 });
 
 app.get('/weather', (request, response) => {
-  console.log('From weather Request', request.query.data.latitude);
   // call a getWeather function
   // process the data from the darksky json - You need a constructor
   // return the results to the client
-
+  try {
+    const weatherData = getWeather(request.query.data);
+    response.send(weatherData);
+  }
+  catch (error) {
+    console.error(error);
+    response.status(500).send('Status: 500. So sorry, something went wrong.');
+  }
   response.send('Return the results here')
 });
 
@@ -48,7 +54,7 @@ app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
 
 // function to get location data
 function searchToLatLong(query) {
-  const geoData = require('./public/data/geo.json');
+  const geoData = require('./data/geo.json');
   const location = new Location(geoData);
   console.log(location);
   return location;
@@ -62,7 +68,19 @@ function Location(data) {
 }
 
 // Start building your Weather function and constructor here.
+function getWeather(query) {
+  const darksky = require('./data/darksky.json');
+  const weatherSummaries = [];
+  darksky.daily.data.forEach( day => {
+    //push something in to the array
+    const daily = new Weather(day)
+    weatherSummaries.push(daily)
+  })
+  return weatherSummaries;
+}
 
-
-
+function Weather(data) {
+  this.forecast = data.summary;
+  this.time = data.time;
+}
 
