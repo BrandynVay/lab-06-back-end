@@ -13,6 +13,8 @@ app.use(cors()); //tell express to use cors
 
 const PORT = process.env.PORT;
 
+const weatherSummaries = [];
+
 app.get('/testing', (request, response) => {
   console.log('found the testing route')
   response.send('<h1>HELLO WORLD...</h1>')
@@ -56,7 +58,7 @@ app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
 
 // function to get location data
 function searchToLatLong(query) {
-  const geoData = require('./public/data/geo.json');
+  const geoData = require('./data/geo.json');
   const location = new Location(geoData);
   console.log(location);
   return location;
@@ -71,17 +73,19 @@ function Location(data) {
 
 // Start building your Weather function and constructor here.
 function getWeather(query) {
-  const darksky = require('./public/data/darksky.json');
+  const darksky = require('./data/darksky.json');
   const rain = new Weather(darksky);
   console.log(rain);
   return rain;
 }
 
-const weatherSummaries = [];
 
-darksky.daily.data.forEach( day => {
-  //push something in to the array
-})
+// darksky.daily.data.forEach( day => {
+//   //push something in to the array
+//   weatherSummaries.push(day);
+// })
+
+console.log(weatherSummaries);
 
 function Weather(data) {
   this.time = data.results[0].daily.data.time;
