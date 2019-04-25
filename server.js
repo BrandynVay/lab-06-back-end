@@ -1,86 +1,94 @@
-'use strict'
+'use strict';
 
 // Load environemnt variabels
 require('dotenv').config();
 
-// Load express to do the heavey lifting
-const express = require('express');
-const app = express();
-
+// Application Dependencies
+const express = require('express'); //Express does the heavy lifting
 const cors = require('cors'); //Cross Origin Resource Sharing
+const superagent = require('superagent');
 
-app.use(cors()); //tell express to use cors
-
+// Application Setup
+const app = express();
+app.use(cors()); // tell express to use cors
 const PORT = process.env.PORT;
+
+// Incoming API Routes
+app.get('/location', searchToLatLong);
+app.get('/weather', getWeather);
+app.get('/meetups', getEventBrite);
+
+// Make sure the server is listening for requests
+app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
 
 app.get('/testing', (request, response) => {
   console.log('found the testing route')
   response.send('<h1>HELLO WORLD...</h1>')
 });
 
-app.get('/location', (request, response) => {
-  try {
-    const locationData = searchToLatLong(request.query.data);
-    response.send(locationData);
-  }
-  catch (error) {
-    console.error(error);
-    response.status(500).send('Status: 500. So sorry, something went wrong.');
-  }
-});
-
-app.get('/weather', (request, response) => {
-  // call a getWeather function
-  // process the data from the darksky json - You need a constructor
-  // return the results to the client
-  try {
-    const weatherData = getWeather(request.query.data);
-    response.send(weatherData);
-  }
-  catch (error) {
-    console.error(error);
-    response.status(500).send('Status: 500. So sorry, something went wrong.');
-  }
-  response.send('Return the results here')
-});
-
-
-
-
-app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
-
-
 // Helper Functions
 
-// function to get location data
-function searchToLatLong(query) {
-  const geoData = require('./data/geo.json');
-  const location = new Location(geoData);
-  console.log(location);
-  return location;
+function searchToLatLong(request, response) {
+  //Define the URL for the GEOCODE API
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEOCODE_API_KEY}`;
+  // console.log(url);
+
+  superagent.get(url)
+    .then(result => {
+      const location = new Location(request.query.data, result);
+      response.send(location);
+    })
+    .catch(err => handleError(err, response));
 }
 
 // Constructor for location data
-function Location(data) {
-  this.formatted_query = data.results[0].formatted_address;
-  this.latitude = data.results[0].geometry.location.lat;
-  this.longitude = data.results[0].geometry.location.lng;
+function Location(query, res) {
+  this.search_query = query;
+  this.formatted_query = res.body.results[0].formatted_address;
+  this.latitude = res.body.results[0].geometry.location.lat;
+  this.longitude = res.body.results[0].geometry.location.lng;
 }
 
-// Start building your Weather function and constructor here.
-function getWeather(query) {
-  const darksky = require('./data/darksky.json');
-  const weatherSummaries = [];
-  darksky.daily.data.forEach( day => {
-    //push something in to the array
-    const daily = new Weather(day)
-    weatherSummaries.push(daily)
-  })
-  return weatherSummaries;
+function getWeather(request, response) {
+  const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
+  // console.log(url);
+
+  superagent.get(url)
+    .then(result => {
+      //consoel.log(result.body);
+      const weatherSummaries = result.body.daily.data.map(day => new Weather(day));
+      response.send(weatherSummaries);
+    })
+    .catch(err => handleError(err, response));
 }
 
-function Weather(data) {
-  this.forecast = data.summary;
-  this.time = data.time;
+function Weather(day) {
+  this.forecast = day.summary;
+  this.time = new Date(day.time * 1000).toString().slice(0, 15);//taking the time in Epoch and converting it in to a string so its readable to the user.
 }
 
+function getEventBrite(request, response) {
+  const url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.PERSONAL_OAUTH_TOKEN}&${request.query.data.location.longitude}&${request.query.data.location.latitude}&expand=venue`;
+  console.log(url); //https://www.eventbriteapi.com/v3/events/search?token=PERSONAL_OAUTH_TOKEN&location.longitude=-123.11236500000001&location.latitude=49.279974&expand=venue
+
+  superagent.get(url)
+    .then(result => {
+      console.log(result);
+      const events = result.body.events.map(event => new Event(event));
+      response.send(events);
+    })
+    .catch(err => handleError(err, response));
+}
+
+function Event(events) {
+  this.name = events.name;
+  this.host = events.venue.name;
+  this.event_date = events.start
+}
+
+
+//Error Handler
+function handleError(err, response) {
+  console.error(err);
+  if (response) response.status(500).send('OPPS');
+}
