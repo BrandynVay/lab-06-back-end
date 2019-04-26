@@ -16,7 +16,7 @@ const PORT = process.env.PORT;
 // Incoming API Routes
 app.get('/location', searchToLatLong);
 app.get('/weather', getWeather);
-app.get('/meetups', getEventBrite);
+app.get('/events', getEventBrite);
 
 // Make sure the server is listening for requests
 app.listen(PORT, () => console.log(`Listening on PORT ${PORT}`));
@@ -68,8 +68,9 @@ function Weather(day) {
 }
 
 function getEventBrite(request, response) {
-  const url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.PERSONAL_OAUTH_TOKEN}&${request.query.data.location.longitude}&${request.query.data.location.latitude}&expand=venue`;
-  console.log(url); //https://www.eventbriteapi.com/v3/events/search?token=PERSONAL_OAUTH_TOKEN&location.longitude=-123.11236500000001&location.latitude=49.279974&expand=venue
+  const url = `https://www.eventbriteapi.com/v3/events/search?token=${process.env.PERSONAL_OAUTH_TOKEN}&location.longitude=${request.query.data.longitude}&location.latitude=${request.query.data.latitude}&expand=venue`;
+
+  console.log(url);
 
   superagent.get(url)
     .then(result => {
@@ -81,9 +82,10 @@ function getEventBrite(request, response) {
 }
 
 function Event(events) {
-  this.name = events.name;
-  this.host = events.venue.name;
-  this.event_date = events.start
+  this.link = events.url;
+  this.name = events.name.text;
+  this.event_date = events.start.local;
+  this.summary = events.summary;
 }
 
 
