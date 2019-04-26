@@ -83,7 +83,6 @@ function getEventBrite(request, response) {
 
 // eventbrite constructor
 function Event(events) {
-  let date = 
   this.link = events.url;
   this.name = events.name.text;
   this.event_date = new Date(events.start.local).toDateString();
